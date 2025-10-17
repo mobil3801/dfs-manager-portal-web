@@ -15,6 +15,7 @@ import FuelDeliveries from "./pages/FuelDeliveries";
 import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 import Users from "./pages/Users";
+import AuthCallback from "./pages/AuthCallback";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
@@ -28,26 +29,30 @@ function Router() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
+  // Allow access to auth callback without authentication
   return (
-    <DashboardLayout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/stations" component={GasStations} />
-        <Route path="/employees" component={Employees} />
-        <Route path="/shifts" component={Shifts} />
-        <Route path="/reports" component={ShiftReports} />
-        <Route path="/expenses" component={Expenses} />
-        <Route path="/fuel-deliveries" component={FuelDeliveries} />
-        <Route path="/analytics" component={Analytics} />
-        <Route path="/users" component={Users} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </DashboardLayout>
+    <Switch>
+      <Route path="/auth/callback" component={AuthCallback} />
+      {!isAuthenticated ? (
+        <Route component={Login} />
+      ) : (
+        <DashboardLayout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/stations" component={GasStations} />
+            <Route path="/employees" component={Employees} />
+            <Route path="/shifts" component={Shifts} />
+            <Route path="/reports" component={ShiftReports} />
+            <Route path="/expenses" component={Expenses} />
+            <Route path="/fuel-deliveries" component={FuelDeliveries} />
+            <Route path="/analytics" component={Analytics} />
+            <Route path="/users" component={Users} />
+            <Route path="/404" component={NotFound} />
+            <Route component={NotFound} />
+          </Switch>
+        </DashboardLayout>
+      )}
+    </Switch>
   );
 }
 

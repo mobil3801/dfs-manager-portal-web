@@ -6,6 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import * as db from "./db";
 import { authenticateUser, createUser } from "./auth";
+import { supabaseAdmin } from "./supabase";
 import { sdk } from "./_core/sdk";
 import { ONE_YEAR_MS } from "@shared/const";
 
@@ -22,17 +23,39 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const user = await authenticateUser(input.email, input.password);
+        // Use Supabase Auth to sign in
+        if (!supabaseAdmin) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Supabase client not initialized",
+          });
+        }
         
-        if (!user) {
+        const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+          email: input.email,
+          password: input.password,
+        });
+
+        if (error || !data.user || !data.session) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Invalid email or password",
           });
         }
 
-        // Create session token
-        const token = await sdk.createSessionToken(user.id, {
+        // Get or create user in local database
+        let user = await db.getUserByEmail(data.user.email!);
+        if (!user) {
+          user = await db.createUser({
+            id: data.user.id,
+            email: data.user.email!,
+            name: data.user.user_metadata?.name || 'User',
+            role: data.user.user_metadata?.role || 'user',
+          });
+        }
+
+        // Create session token with Supabase user ID
+        const token = await sdk.createSessionToken(data.user.id, {
           name: user.name || user.email || "User",
           expiresInMs: ONE_YEAR_MS,
         });
