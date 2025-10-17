@@ -27,7 +27,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-import { Building2, Clock, FileText, DollarSign, TrendingUp, Fuel } from "lucide-react";
+import { Building2, Clock, FileText, DollarSign, TrendingUp, Fuel, UserCog } from "lucide-react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -38,6 +38,7 @@ const menuItems = [
   { icon: DollarSign, label: "Expenses", path: "/expenses" },
   { icon: Fuel, label: "Fuel Deliveries", path: "/fuel-deliveries" },
   { icon: TrendingUp, label: "Analytics", path: "/analytics" },
+  { icon: UserCog, label: "User Management", path: "/users" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

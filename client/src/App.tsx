@@ -13,8 +13,25 @@ import ShiftReports from "./pages/ShiftReports";
 import Expenses from "./pages/Expenses";
 import FuelDeliveries from "./pages/FuelDeliveries";
 import Analytics from "./pages/Analytics";
+import Login from "./pages/Login";
+import Users from "./pages/Users";
+import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <DashboardLayout>
       <Switch>
@@ -26,6 +43,7 @@ function Router() {
         <Route path="/expenses" component={Expenses} />
         <Route path="/fuel-deliveries" component={FuelDeliveries} />
         <Route path="/analytics" component={Analytics} />
+        <Route path="/users" component={Users} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
