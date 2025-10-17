@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE employees \nADD COLUMN profile_picture_url TEXT,\nADD COLUMN id_document_url TEXT,\nADD COLUMN id_document_type VARCHAR(50)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user PDbr8XrQDBL7gch.root --database iAmwvqxbN2keKvYUSqkQh2 --execute ALTER TABLE employees \nADD COLUMN profile_picture_url TEXT,\nADD COLUMN id_document_url TEXT,\nADD COLUMN id_document_type VARCHAR(50)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 987
+}

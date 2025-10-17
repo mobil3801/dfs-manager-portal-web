@@ -42,6 +42,9 @@ export const employees = mysqlTable("employees", {
   email: varchar("email", { length: 320 }).unique(),
   phoneNumber: varchar("phone_number", { length: 20 }),
   role: mysqlEnum("employee_role", ["manager", "cashier", "attendant"]).notNull(),
+  profilePictureUrl: text("profile_picture_url"),
+  idDocumentUrl: text("id_document_url"),
+  idDocumentType: varchar("id_document_type", { length: 50 }),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

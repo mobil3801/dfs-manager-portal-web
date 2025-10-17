@@ -115,6 +115,49 @@ export const appRouter = router({
       }),
   }),
 
+  // File Upload
+  upload: router({
+    uploadEmployeeDocument: protectedProcedure
+      .input(
+        z.object({
+          employeeId: z.string(),
+          fileData: z.string(), // base64 encoded
+          fileName: z.string(),
+          fileType: z.string(),
+          documentType: z.enum(["profile", "id"]),
+          idType: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { storagePut } = await import("./storage");
+        
+        // Decode base64
+        const buffer = Buffer.from(input.fileData, "base64");
+        
+        // Create unique file path
+        const timestamp = Date.now();
+        const fileExtension = input.fileName.split(".").pop();
+        const filePath = `employees/${input.employeeId}/${input.documentType}_${timestamp}.${fileExtension}`;
+        
+        // Upload to S3
+        const { url } = await storagePut(filePath, buffer, input.fileType);
+        
+        // Update employee record
+        if (input.documentType === "profile") {
+          await db.updateEmployee(input.employeeId, {
+            profilePictureUrl: url,
+          });
+        } else {
+          await db.updateEmployee(input.employeeId, {
+            idDocumentUrl: url,
+            idDocumentType: input.idType,
+          });
+        }
+        
+        return { success: true, url };
+      }),
+  }),
+
   // Employee Management
   employees: router({
     list: protectedProcedure.query(async () => {
@@ -129,7 +172,7 @@ export const appRouter = router({
     
     create: protectedProcedure
       .input(z.object({
-        gasStationId: z.string(),
+        gasStationId: z.string().optional(),
         firstName: z.string(),
         lastName: z.string(),
         email: z.string().email().optional(),

@@ -1,0 +1,82 @@
+{
+  "query": "DESCRIBE employees",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user PDbr8XrQDBL7gch.root --database iAmwvqxbN2keKvYUSqkQh2 --execute DESCRIBE employees",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "varchar(36)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "gas_station_id",
+      "Type": "varchar(36)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "first_name",
+      "Type": "text",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "last_name",
+      "Type": "text",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "email",
+      "Type": "varchar(320)",
+      "Null": "YES",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "phone_number",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "employee_role",
+      "Type": "enum('manager','cashier','attendant')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "is_active",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "created_at",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tvarchar(36)\tNO\tPRI\tNULL\t\ngas_station_id\tvarchar(36)\tYES\tMUL\tNULL\t\nfirst_name\ttext\tNO\t\tNULL\t\nlast_name\ttext\tNO\t\tNULL\t\nemail\tvarchar(320)\tYES\tUNI\tNULL\t\nphone_number\tvarchar(20)\tYES\t\tNULL\t\nemployee_role\tenum('manager','cashier','attendant')\tNO\t\tNULL\t\nis_active\ttinyint(1)\tNO\t\t1\t\ncreated_at\ttimestamp\tYES\t\tCURRENT_TIMESTAMP\t\n",
+  "stderr": "",
+  "execution_time_ms": 127
+}

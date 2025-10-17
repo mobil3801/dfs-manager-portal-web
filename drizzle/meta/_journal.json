@@ -15,6 +15,13 @@
       "when": 1760676179764,
       "tag": "0001_fuzzy_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1760677613791,
+      "tag": "0002_curved_the_call",
+      "breakpoints": true
     }
   ]
 }
