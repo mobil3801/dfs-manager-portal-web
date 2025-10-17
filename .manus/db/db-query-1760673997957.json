@@ -1,0 +1,9 @@
+{
+  "query": "DROP TABLE IF EXISTS fuel_inventory, fuel_delivery_items, fuel_deliveries, transactions, shift_closing_reports, shifts, expenses, employees, gas_stations;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user PDbr8XrQDBL7gch.root --database iAmwvqxbN2keKvYUSqkQh2 --execute DROP TABLE IF EXISTS fuel_inventory, fuel_delivery_items, fuel_deliveries, transactions, shift_closing_reports, shifts, expenses, employees, gas_stations;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2692
+}

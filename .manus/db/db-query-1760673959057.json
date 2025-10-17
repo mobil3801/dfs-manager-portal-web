@@ -1,0 +1,24 @@
+{
+  "query": "SHOW CREATE TABLE users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user PDbr8XrQDBL7gch.root --database iAmwvqxbN2keKvYUSqkQh2 --execute SHOW CREATE TABLE users;",
+  "rows": [
+    {
+      "Table": "users",
+      "Create Table": "CREATE TABLE `users` ("
+    }
+  ],
+  "messages": [
+    "  `id` varchar(64) NOT NULL,",
+    "  `name` text DEFAULT NULL,",
+    "  `email` varchar(320) DEFAULT NULL,",
+    "  `loginMethod` varchar(64) DEFAULT NULL,",
+    "  `role` enum('user','admin') NOT NULL DEFAULT 'user',",
+    "  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  `lastSignedIn` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"
+  ],
+  "stdout": "Table\tCreate Table\nusers\tCREATE TABLE `users` (\n  `id` varchar(64) NOT NULL,\n  `name` text DEFAULT NULL,\n  `email` varchar(320) DEFAULT NULL,\n  `loginMethod` varchar(64) DEFAULT NULL,\n  `role` enum('user','admin') NOT NULL DEFAULT 'user',\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `lastSignedIn` timestamp DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin\n",
+  "stderr": "",
+  "execution_time_ms": 124
+}

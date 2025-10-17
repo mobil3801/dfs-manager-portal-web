@@ -27,9 +27,17 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
+import { Building2, Clock, FileText, DollarSign, TrendingUp, Fuel } from "lucide-react";
+
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Building2, label: "Gas Stations", path: "/stations" },
+  { icon: Users, label: "Employees", path: "/employees" },
+  { icon: Clock, label: "Shifts", path: "/shifts" },
+  { icon: FileText, label: "Shift Reports", path: "/reports" },
+  { icon: DollarSign, label: "Expenses", path: "/expenses" },
+  { icon: Fuel, label: "Fuel Deliveries", path: "/fuel-deliveries" },
+  { icon: TrendingUp, label: "Analytics", path: "/analytics" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
