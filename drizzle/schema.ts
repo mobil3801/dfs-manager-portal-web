@@ -1,4 +1,4 @@
-import { boolean, pgEnum, pgTable, text, timestamp, varchar, integer, numeric } from "drizzle-orm/pg-core";
+import { boolean, pgEnum, pgTable, text, timestamp, varchar, integer, numeric, jsonb } from "drizzle-orm/pg-core";
 
 /**
  * Core user table backing auth flow.
@@ -41,15 +41,17 @@ export const employeeRoleEnum = pgEnum("employee_role", ["manager", "cashier", "
 
 export const employees = pgTable("employees", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
-  gasStationId: varchar("gas_station_id", { length: 36 }).references(() => gasStations.id),
+  gasStationId: varchar("gas_station_id", { length: 36 }).references(() => gasStations.id), // Keep for backward compatibility
+  gasStationIds: jsonb("gas_station_ids").$type<string[]>().default([]), // New: Array of station IDs
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: varchar("email", { length: 320 }).unique(),
   phoneNumber: varchar("phone_number", { length: 20 }),
   role: employeeRoleEnum("employee_role").notNull(),
   profilePictureUrl: text("profile_picture_url"),
-  idDocumentUrl: text("id_document_url"),
-  idDocumentType: varchar("id_document_type", { length: 50 }),
+  idDocumentUrl: text("id_document_url"), // Keep for backward compatibility
+  idDocumentType: varchar("id_document_type", { length: 50 }), // Keep for backward compatibility
+  idDocuments: jsonb("id_documents").$type<Array<{ url: string; type: string }>>().default([]), // New: Array of ID documents
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

@@ -148,9 +148,18 @@ export const appRouter = router({
             profilePictureUrl: url,
           });
         } else {
+          // Get current employee data
+          const employee = await db.getEmployeeById(input.employeeId);
+          const currentDocs = employee?.idDocuments || [];
+          
+          // Add new ID document to array
+          const updatedDocs = [
+            ...currentDocs,
+            { url, type: input.idType || "Unknown" }
+          ];
+          
           await db.updateEmployee(input.employeeId, {
-            idDocumentUrl: url,
-            idDocumentType: input.idType,
+            idDocuments: updatedDocs,
           });
         }
         
@@ -173,6 +182,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         gasStationId: z.string().optional(),
+        gasStationIds: z.array(z.string()).optional(),
         firstName: z.string(),
         lastName: z.string(),
         email: z.string().email().optional(),

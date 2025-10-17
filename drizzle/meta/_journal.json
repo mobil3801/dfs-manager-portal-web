@@ -8,6 +8,13 @@
       "when": 1760678910295,
       "tag": "0000_living_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760695056344,
+      "tag": "0001_sturdy_maginty",
+      "breakpoints": true
     }
   ]
 }

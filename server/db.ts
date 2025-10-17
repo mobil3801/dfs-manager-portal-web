@@ -133,6 +133,13 @@ export async function getAllEmployees() {
   return await db.select().from(employees).orderBy(desc(employees.createdAt));
 }
 
+export async function getEmployeeById(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(employees).where(eq(employees.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function createEmployee(data: InsertEmployee) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

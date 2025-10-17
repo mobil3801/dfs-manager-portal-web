@@ -28,23 +28,30 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { UserPlus, Eye, Download, User } from "lucide-react";
+import { UserPlus, Eye, Download, User, X, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface IdDocument {
+  file: File;
+  type: string;
+  preview: string;
+}
 
 export default function Employees() {
   const [open, setOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
-  const [gasStationId, setGasStationId] = useState("");
+  const [selectedStationIds, setSelectedStationIds] = useState<string[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState<"manager" | "cashier" | "attendant">("cashier");
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
-  const [idDocument, setIdDocument] = useState<File | null>(null);
-  const [idType, setIdType] = useState("");
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string>("");
+  const [idDocuments, setIdDocuments] = useState<IdDocument[]>([]);
 
   const { data: employees, isLoading } = trpc.employees.list.useQuery();
   const { data: gasStations } = trpc.gasStations.list.useQuery();
@@ -59,9 +66,11 @@ export default function Employees() {
         await uploadFile(employeeId, profilePicture, "profile");
       }
       
-      // Upload ID document if provided
-      if (idDocument && employeeId) {
-        await uploadFile(employeeId, idDocument, "id", idType);
+      // Upload ID documents if provided
+      if (idDocuments.length > 0 && employeeId) {
+        for (const idDoc of idDocuments) {
+          await uploadFile(employeeId, idDoc.file, "id", idDoc.type);
+        }
       }
       
       toast.success("Employee added successfully!");
@@ -104,22 +113,83 @@ export default function Employees() {
     });
   };
 
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddIdDocument = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,.pdf";
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setIdDocuments([
+            ...idDocuments,
+            {
+              file,
+              type: "",
+              preview: reader.result as string,
+            },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleRemoveIdDocument = (index: number) => {
+    setIdDocuments(idDocuments.filter((_, i) => i !== index));
+  };
+
+  const handleIdTypeChange = (index: number, type: string) => {
+    const updated = [...idDocuments];
+    updated[index].type = type;
+    setIdDocuments(updated);
+  };
+
+  const handleStationToggle = (stationId: string) => {
+    setSelectedStationIds((prev) =>
+      prev.includes(stationId)
+        ? prev.filter((id) => id !== stationId)
+        : [...prev, stationId]
+    );
+  };
+
   const resetForm = () => {
-    setGasStationId("");
+    setSelectedStationIds([]);
     setFirstName("");
     setLastName("");
     setEmail("");
     setPhoneNumber("");
     setRole("cashier");
     setProfilePicture(null);
-    setIdDocument(null);
-    setIdType("");
+    setProfilePicturePreview("");
+    setIdDocuments([]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that all ID documents have types
+    if (idDocuments.some((doc) => !doc.type)) {
+      toast.error("Please select ID type for all documents");
+      return;
+    }
+    
     createEmployeeMutation.mutate({
-      gasStationId: gasStationId || undefined,
+      gasStationIds: selectedStationIds,
       firstName,
       lastName,
       email: email || undefined,
@@ -149,6 +219,14 @@ export default function Employees() {
     } catch (error) {
       toast.error("Failed to download file");
     }
+  };
+
+  const getStationNames = (stationIds: string[]) => {
+    if (!stationIds || stationIds.length === 0) return "-";
+    return stationIds
+      .map((id) => gasStations?.find((s: any) => s.id === id)?.name)
+      .filter(Boolean)
+      .join(", ");
   };
 
   return (
@@ -216,19 +294,40 @@ export default function Employees() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="gasStation">Gas Station</Label>
-                <Select value={gasStationId} onValueChange={setGasStationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a gas station" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {gasStations?.map((station: any) => (
-                      <SelectItem key={station.id} value={station.id}>
-                        {station.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Gas Stations (Select Multiple)</Label>
+                <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                  {gasStations && gasStations.length > 0 ? (
+                    gasStations.map((station: any) => (
+                      <div key={station.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`station-${station.id}`}
+                          checked={selectedStationIds.includes(station.id)}
+                          onCheckedChange={() => handleStationToggle(station.id)}
+                        />
+                        <label
+                          htmlFor={`station-${station.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {station.name}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No gas stations available</p>
+                  )}
+                </div>
+                {selectedStationIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {selectedStationIds.map((id) => {
+                      const station = gasStations?.find((s: any) => s.id === id);
+                      return (
+                        <Badge key={id} variant="secondary" className="text-xs">
+                          {station?.name}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -250,48 +349,100 @@ export default function Employees() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="profilePicture">Profile Picture</Label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <Input
                       id="profilePicture"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
+                      onChange={handleProfilePictureChange}
+                      className="flex-1"
                     />
-                    {profilePicture && (
-                      <Badge variant="secondary">{profilePicture.name}</Badge>
+                    {profilePicturePreview && (
+                      <img
+                        src={profilePicturePreview}
+                        alt="Preview"
+                        className="w-16 h-16 rounded-lg object-cover border"
+                      />
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="idDocument">ID Document</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="idDocument"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => setIdDocument(e.target.files?.[0] || null)}
-                    />
-                    {idDocument && <Badge variant="secondary">{idDocument.name}</Badge>}
+                  <div className="flex items-center justify-between">
+                    <Label>ID Documents</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddIdDocument}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add ID
+                    </Button>
                   </div>
+                  
+                  {idDocuments.length > 0 && (
+                    <div className="space-y-3">
+                      {idDocuments.map((doc, index) => (
+                        <div
+                          key={index}
+                          className="border rounded-lg p-3 space-y-2"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="relative">
+                              {doc.preview.startsWith("data:image") ? (
+                                <img
+                                  src={doc.preview}
+                                  alt={`ID ${index + 1}`}
+                                  className="w-24 h-24 rounded object-cover border"
+                                />
+                              ) : (
+                                <div className="w-24 h-24 rounded border flex items-center justify-center bg-muted">
+                                  <p className="text-xs text-center">PDF</p>
+                                </div>
+                              )}
+                              {doc.type && (
+                                <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                                  {doc.type}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium truncate">
+                                  {doc.file.name}
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveIdDocument(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <Select
+                                value={doc.type}
+                                onValueChange={(value) => handleIdTypeChange(index, value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Select ID type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Driver License">Driver License</SelectItem>
+                                  <SelectItem value="Passport">Passport</SelectItem>
+                                  <SelectItem value="State ID">State ID</SelectItem>
+                                  <SelectItem value="National ID">National ID</SelectItem>
+                                  <SelectItem value="Work Permit">Work Permit</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {idDocument && (
-                  <div className="space-y-2">
-                    <Label htmlFor="idType">ID Type</Label>
-                    <Select value={idType} onValueChange={setIdType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select ID type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Driver License">Driver License</SelectItem>
-                        <SelectItem value="Passport">Passport</SelectItem>
-                        <SelectItem value="National ID">National ID</SelectItem>
-                        <SelectItem value="State ID">State ID</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
@@ -327,6 +478,7 @@ export default function Employees() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Stations</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -337,7 +489,7 @@ export default function Employees() {
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={employee.profilePictureUrl || undefined} />
+                        <AvatarImage src={employee.profilePictureUrl || undefined} alt={`${employee.firstName} ${employee.lastName}`} />
                         <AvatarFallback>
                           {employee.firstName[0]}
                           {employee.lastName[0]}
@@ -349,6 +501,22 @@ export default function Employees() {
                     </TableCell>
                     <TableCell>{employee.email || "-"}</TableCell>
                     <TableCell>{employee.phoneNumber || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {employee.gasStationIds && employee.gasStationIds.length > 0 ? (
+                          employee.gasStationIds.map((stationId: string) => {
+                            const station = gasStations?.find((s: any) => s.id === stationId);
+                            return station ? (
+                              <Badge key={stationId} variant="secondary" className="text-xs">
+                                {station.name}
+                              </Badge>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{employee.role}</Badge>
                     </TableCell>
@@ -390,7 +558,7 @@ export default function Employees() {
 
       {/* View Employee Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Employee Details</DialogTitle>
           </DialogHeader>
@@ -448,10 +616,77 @@ export default function Employees() {
                       <Badge variant="outline">{selectedEmployee.role}</Badge>
                     </p>
                   </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Assigned Stations</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedEmployee.gasStationIds && selectedEmployee.gasStationIds.length > 0 ? (
+                        selectedEmployee.gasStationIds.map((stationId: string) => {
+                          const station = gasStations?.find((s: any) => s.id === stationId);
+                          return station ? (
+                            <Badge key={stationId} variant="secondary">
+                              {station.name}
+                            </Badge>
+                          ) : null;
+                        })
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No stations assigned</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {selectedEmployee.idDocumentUrl && (
+              {selectedEmployee.idDocuments && selectedEmployee.idDocuments.length > 0 && (
+                <div className="border-t pt-4 space-y-3">
+                  <Label className="text-base font-semibold">ID Documents</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedEmployee.idDocuments.map((doc: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline">{doc.type}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleDownload(
+                                doc.url,
+                                `${selectedEmployee.firstName}_${selectedEmployee.lastName}_${doc.type}.jpg`
+                              )
+                            }
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="relative">
+                          {doc.url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                            <>
+                              <img
+                                src={doc.url}
+                                alt={doc.type}
+                                className="w-full h-48 rounded object-cover border"
+                              />
+                              <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                {doc.type}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="h-48 border rounded flex items-center justify-center bg-muted">
+                              <div className="text-center">
+                                <p className="text-sm font-medium">{doc.type}</p>
+                                <p className="text-xs text-muted-foreground mt-1">PDF Document</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Show legacy ID document if exists */}
+              {selectedEmployee.idDocumentUrl && 
+               (!selectedEmployee.idDocuments || selectedEmployee.idDocuments.length === 0) && (
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
@@ -476,19 +711,28 @@ export default function Employees() {
                       Download
                     </Button>
                   </div>
-                  {selectedEmployee.idDocumentUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                    <img
-                      src={selectedEmployee.idDocumentUrl}
-                      alt="ID Document"
-                      className="w-full max-h-96 rounded-lg object-contain border"
-                    />
-                  ) : (
-                    <div className="p-8 border rounded-lg text-center bg-muted">
-                      <p className="text-sm text-muted-foreground">
-                        PDF document - Click download to view
-                      </p>
-                    </div>
-                  )}
+                  <div className="relative">
+                    {selectedEmployee.idDocumentUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                      <>
+                        <img
+                          src={selectedEmployee.idDocumentUrl}
+                          alt="ID Document"
+                          className="w-full max-h-96 rounded-lg object-contain border"
+                        />
+                        {selectedEmployee.idDocumentType && (
+                          <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                            {selectedEmployee.idDocumentType}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-8 border rounded-lg text-center bg-muted">
+                        <p className="text-sm text-muted-foreground">
+                          PDF document - Click download to view
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
