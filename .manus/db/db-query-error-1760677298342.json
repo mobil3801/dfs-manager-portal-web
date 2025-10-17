@@ -1,8 +1,0 @@
-{
-  "query": "ALTER TABLE employees \nADD COLUMN profile_picture_url TEXT AFTER employee_role,\nADD COLUMN id_document_url TEXT AFTER profile_picture_url,\nADD COLUMN id_document_type VARCHAR(50) AFTER id_document_url",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user PDbr8XrQDBL7gch.root --database iAmwvqxbN2keKvYUSqkQh2 --execute ALTER TABLE employees \nADD COLUMN profile_picture_url TEXT AFTER employee_role,\nADD COLUMN id_document_url TEXT AFTER profile_picture_url,\nADD COLUMN id_document_type VARCHAR(50) AFTER id_document_url",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'profile_picture_url' in 'employees'"
-  ]
-}
