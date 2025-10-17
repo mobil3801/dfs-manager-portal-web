@@ -14,7 +14,7 @@ export default function Expenses() {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     gasStationId: "",
-    category: "supplies" as "payroll" | "utilities" | "maintenance" | "supplies" | "rent" | "insurance" | "taxes" | "other",
+    category: "supplies" as "payroll" | "utilities" | "maintenance" | "supplies" | "rent" | "insurance" | "other",
     amount: "",
     description: "",
     expenseDate: new Date().toISOString().split("T")[0],

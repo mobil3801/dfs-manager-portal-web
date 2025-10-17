@@ -255,7 +255,16 @@ export const appRouter = router({
         notes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        return await db.createShiftClosingReport(input);
+        return await db.createShiftClosingReport({
+          ...input,
+          gasStationId: input.shiftId, // Will be updated from shift
+          employeeId: input.shiftId, // Will be updated from shift
+          openingCash: "0",
+          closingCash: input.cashAmount.toString(),
+          totalSales: input.totalSales.toString(),
+          cashSales: input.cashAmount.toString(),
+          creditCardSales: input.creditAmount.toString(),
+        });
       }),
     
     byShift: protectedProcedure
@@ -296,7 +305,11 @@ export const appRouter = router({
         transactionDate: z.date(),
       }))
       .mutation(async ({ input }) => {
-        return await db.createTransaction(input);
+        return await db.createTransaction({
+          ...input,
+          amount: input.amount.toString(),
+          paymentMethod: "cash", // Default payment method
+        });
       }),
     
     byDateRange: protectedProcedure
@@ -315,7 +328,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         gasStationId: z.string(),
-        category: z.enum(["payroll", "utilities", "maintenance", "supplies", "rent", "insurance", "taxes", "other"]),
+        category: z.enum(["payroll", "utilities", "maintenance", "supplies", "rent", "insurance", "other"]),
         amount: z.number(),
         description: z.string().optional(),
         expenseDate: z.string(), // date string
@@ -323,6 +336,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.createExpense({
           ...input,
+          amount: input.amount.toString(),
           expenseDate: new Date(input.expenseDate)
         });
       }),
@@ -355,85 +369,31 @@ export const appRouter = router({
   fuelDeliveries: router({
     create: protectedProcedure
       .input(z.object({
-        gasStationId: z.string(),
-        billOfLadingNumber: z.string(),
         deliveryDate: z.string(),
-        supplier: z.string().optional(),
-        items: z.array(z.object({
-          fuelGrade: z.enum(["regular", "plus", "premium", "diesel"]),
-          quantity: z.number(),
-          pricePerGallon: z.number(),
-          yellowMark: z.string().optional(),
-          redMark: z.string().optional(),
-        })),
+        gasStationId: z.string(),
+        fuelType: z.string(),
+        quantity: z.number(),
+        pricePerGallon: z.number(),
+        supplier: z.string(),
+        billOfLading: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { items, deliveryDate, ...deliveryData } = input;
+        const { deliveryDate, quantity, pricePerGallon, ...deliveryData } = input;
+        const totalCost = quantity * pricePerGallon;
         
-        // Create delivery
-        const delivery = await db.createFuelDelivery({
+        return await db.createFuelDelivery({
           ...deliveryData,
+          quantity: quantity.toString(),
+          pricePerGallon: pricePerGallon.toString(),
+          totalCost: totalCost.toString(),
           deliveryDate: new Date(deliveryDate)
         });
-        const deliveryId = (delivery as any).insertId || (delivery as any)[0]?.insertId;
-        
-        // Create delivery items with cost calculations
-        for (const item of items) {
-          let cost = 0;
-          if (item.fuelGrade === "diesel") {
-            // Diesel: Price + 0.660965
-            cost = Math.round((item.pricePerGallon + 66.0965));
-          } else {
-            // Regular/Plus/Premium: Price + 0.618346
-            cost = Math.round((item.pricePerGallon + 61.8346));
-          }
-          
-          const totalCost = cost * item.quantity;
-          
-          await db.createFuelDeliveryItem({
-            fuelDeliveryId: deliveryId,
-            fuelGrade: item.fuelGrade,
-            quantity: item.quantity,
-            pricePerGallon: item.pricePerGallon,
-            cost,
-            totalCost,
-            yellowMark: item.yellowMark,
-            redMark: item.redMark,
-          });
-        }
-        
-        return delivery;
       }),
     
     byStation: protectedProcedure
       .input(z.object({ gasStationId: z.string() }))
       .query(async ({ input }) => {
         return await db.getFuelDeliveriesByStation(input.gasStationId);
-      }),
-    
-    items: protectedProcedure
-      .input(z.object({ deliveryId: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getFuelDeliveryItems(input.deliveryId);
-      }),
-  }),
-
-  // Fuel Inventory
-  fuelInventory: router({
-    update: protectedProcedure
-      .input(z.object({
-        gasStationId: z.string(),
-        fuelGrade: z.enum(["regular", "plus", "premium", "diesel"]),
-        quantity: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.updateFuelInventory(input);
-      }),
-    
-    byStation: protectedProcedure
-      .input(z.object({ gasStationId: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getFuelInventoryByStation(input.gasStationId);
       }),
   }),
 

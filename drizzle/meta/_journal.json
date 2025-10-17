@@ -1,26 +1,12 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1760673964971,
-      "tag": "0000_certain_galactus",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1760676179764,
-      "tag": "0001_fuzzy_virginia_dare",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1760677613791,
-      "tag": "0002_curved_the_call",
+      "version": "7",
+      "when": 1760678910295,
+      "tag": "0000_living_arclight",
       "breakpoints": true
     }
   ]

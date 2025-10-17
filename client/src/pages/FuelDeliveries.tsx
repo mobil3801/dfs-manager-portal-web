@@ -6,28 +6,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Fuel, Plus, Trash2 } from "lucide-react";
+import { Fuel, Plus } from "lucide-react";
 import { toast } from "sonner";
-
-type FuelItem = {
-  fuelGrade: "regular" | "plus" | "premium" | "diesel";
-  quantity: string;
-  pricePerGallon: string;
-  yellowMark: string;
-  redMark: string;
-};
 
 export default function FuelDeliveries() {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     gasStationId: "",
-    billOfLadingNumber: "",
-    deliveryDate: new Date().toISOString().split("T")[0],
+    fuelType: "",
+    quantity: "",
+    pricePerGallon: "",
     supplier: "",
+    billOfLading: "",
+    deliveryDate: new Date().toISOString().split("T")[0],
   });
-  const [fuelItems, setFuelItems] = useState<FuelItem[]>([
-    { fuelGrade: "regular", quantity: "", pricePerGallon: "", yellowMark: "", redMark: "" },
-  ]);
 
   const utils = trpc.useUtils();
   const { data: stations } = trpc.gasStations.list.useQuery();
@@ -37,14 +29,15 @@ export default function FuelDeliveries() {
       setOpen(false);
       setFormData({
         gasStationId: "",
-        billOfLadingNumber: "",
-        deliveryDate: new Date().toISOString().split("T")[0],
+        fuelType: "",
+        quantity: "",
+        pricePerGallon: "",
         supplier: "",
+        billOfLading: "",
+        deliveryDate: new Date().toISOString().split("T")[0],
       });
-      setFuelItems([
-        { fuelGrade: "regular", quantity: "", pricePerGallon: "", yellowMark: "", redMark: "" },
-      ]);
       toast.success("Fuel delivery logged successfully!");
+      utils.fuelDeliveries.byStation.invalidate();
     },
     onError: (error) => {
       toast.error("Failed to log fuel delivery: " + error.message);
@@ -54,35 +47,11 @@ export default function FuelDeliveries() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const items = fuelItems.map((item) => ({
-      fuelGrade: item.fuelGrade,
-      quantity: parseInt(item.quantity),
-      pricePerGallon: Math.round(parseFloat(item.pricePerGallon) * 100), // Convert to cents
-      yellowMark: item.yellowMark || undefined,
-      redMark: item.redMark || undefined,
-    }));
-
     createDelivery.mutate({
       ...formData,
-      items,
+      quantity: parseFloat(formData.quantity),
+      pricePerGallon: parseFloat(formData.pricePerGallon),
     });
-  };
-
-  const addFuelItem = () => {
-    setFuelItems([
-      ...fuelItems,
-      { fuelGrade: "regular", quantity: "", pricePerGallon: "", yellowMark: "", redMark: "" },
-    ]);
-  };
-
-  const removeFuelItem = (index: number) => {
-    setFuelItems(fuelItems.filter((_, i) => i !== index));
-  };
-
-  const updateFuelItem = (index: number, field: keyof FuelItem, value: string) => {
-    const updated = [...fuelItems];
-    updated[index] = { ...updated[index], [field]: value };
-    setFuelItems(updated);
   };
 
   return (
@@ -100,21 +69,21 @@ export default function FuelDeliveries() {
               Log Delivery
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Log Fuel Delivery</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="gasStationId">Gas Station</Label>
+                  <Label htmlFor="gasStation">Gas Station</Label>
                   <Select
                     value={formData.gasStationId}
                     onValueChange={(value) => setFormData({ ...formData, gasStationId: value })}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a gas station" />
+                      <SelectValue placeholder="Select station" />
                     </SelectTrigger>
                     <SelectContent>
                       {stations?.map((station) => (
@@ -139,105 +108,66 @@ export default function FuelDeliveries() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="billOfLadingNumber">Bill of Lading Number</Label>
-                  <Input
-                    id="billOfLadingNumber"
-                    value={formData.billOfLadingNumber}
-                    onChange={(e) => setFormData({ ...formData, billOfLadingNumber: e.target.value })}
+                  <Label htmlFor="fuelType">Fuel Type</Label>
+                  <Select
+                    value={formData.fuelType}
+                    onValueChange={(value) => setFormData({ ...formData, fuelType: value })}
                     required
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fuel type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Regular">Regular</SelectItem>
+                      <SelectItem value="Plus">Plus</SelectItem>
+                      <SelectItem value="Premium">Premium</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label htmlFor="supplier">Supplier (Optional)</Label>
+                  <Label htmlFor="quantity">Quantity (Gallons)</Label>
                   <Input
-                    id="supplier"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    id="quantity"
+                    type="number"
+                    step="0.01"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    required
                   />
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold">Fuel Items</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addFuelItem}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Fuel Grade
-                  </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="pricePerGallon">Price per Gallon ($)</Label>
+                  <Input
+                    id="pricePerGallon"
+                    type="number"
+                    step="0.001"
+                    value={formData.pricePerGallon}
+                    onChange={(e) => setFormData({ ...formData, pricePerGallon: e.target.value })}
+                    required
+                  />
                 </div>
-
-                <div className="space-y-4">
-                  {fuelItems.map((item, index) => (
-                    <div key={index} className="p-4 border rounded-lg space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium">Fuel Item {index + 1}</h4>
-                        {fuelItems.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFuelItem(index)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Fuel Grade</Label>
-                          <Select
-                            value={item.fuelGrade}
-                            onValueChange={(value: any) => updateFuelItem(index, "fuelGrade", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="regular">Regular</SelectItem>
-                              <SelectItem value="plus">Plus</SelectItem>
-                              <SelectItem value="premium">Premium</SelectItem>
-                              <SelectItem value="diesel">Diesel</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Quantity (Gallons)</Label>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateFuelItem(index, "quantity", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label>Price per Gallon ($)</Label>
-                          <Input
-                            type="number"
-                            step="0.001"
-                            value={item.pricePerGallon}
-                            onChange={(e) => updateFuelItem(index, "pricePerGallon", e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label>Yellow Mark</Label>
-                          <Input
-                            value={item.yellowMark}
-                            onChange={(e) => updateFuelItem(index, "yellowMark", e.target.value)}
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label>Red Mark</Label>
-                          <Input
-                            value={item.redMark}
-                            onChange={(e) => updateFuelItem(index, "redMark", e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <Label htmlFor="supplier">Supplier</Label>
+                  <Input
+                    id="supplier"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    required
+                  />
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="billOfLading">Bill of Lading Number (Optional)</Label>
+                <Input
+                  id="billOfLading"
+                  value={formData.billOfLading}
+                  onChange={(e) => setFormData({ ...formData, billOfLading: e.target.value })}
+                />
               </div>
 
               <div className="flex justify-end gap-3">
@@ -263,7 +193,7 @@ export default function FuelDeliveries() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500">
-            Fuel deliveries will appear here. Each delivery includes Bill of Lading details, fuel grades, quantities, and pricing.
+            Fuel deliveries will appear here with Bill of Lading details, fuel type, quantities, and pricing.
           </p>
         </CardContent>
       </Card>
