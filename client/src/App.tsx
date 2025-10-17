@@ -4,17 +4,32 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import DashboardLayout from "./components/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import GasStations from "./pages/GasStations";
+import Employees from "./pages/Employees";
+import Shifts from "./pages/Shifts";
+import ShiftReports from "./pages/ShiftReports";
+import Expenses from "./pages/Expenses";
+import FuelDeliveries from "./pages/FuelDeliveries";
+import Analytics from "./pages/Analytics";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <DashboardLayout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/stations" component={GasStations} />
+        <Route path="/employees" component={Employees} />
+        <Route path="/shifts" component={Shifts} />
+        <Route path="/reports" component={ShiftReports} />
+        <Route path="/expenses" component={Expenses} />
+        <Route path="/fuel-deliveries" component={FuelDeliveries} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </DashboardLayout>
   );
 }
 
